@@ -13,6 +13,20 @@ the *downside* to this is that you have to know the format of the json file to p
 ### parsing a settings file
 
 ```c
+/*
+settings.json
+{
+	"title": "application",
+	"graphics": {
+		"resolution": [
+			1920,
+			1080
+		],
+		"is_full_screen": false
+	}
+}
+*/
+
 #include "jsonfish.h"
 
 struct {

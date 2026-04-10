@@ -16,21 +16,21 @@ the *downside* to this is that you have to know the format of the json file to p
 #include "jsonfish.h"
 
 struct {
-    char title[JSON_MAX_STRING];
-
-    struct {
-        float resolution[2];
-        bool is_full_screen;
-    } graphics;
+	char title[JSON_MAX_STRING];
+	
+	struct {
+		float resolution[2];
+		bool is_full_screen;
+	} graphics;
 } settings;
 
 int main(int argc, char **argv) {
-    json_t settings_map[] = {
-        (json_t){
-            .type = JSON_VALUE_TYPE_STRING,
-            .key = "title",
-            .value = &settings.title,
-        },
+	json_t settings_map[] = {
+		(json_t){
+			.type = JSON_VALUE_TYPE_STRING,
+			.key = "title",
+			.value = &settings.title,
+		},
 		(json_t){
 			.type = JSON_VALUE_TYPE_OBJECT,
 			.key = "graphics",
@@ -48,10 +48,10 @@ int main(int argc, char **argv) {
 					.key = "is_full_screen",
 					.value = &settings.graphics.is_full_screen,
 				},
-            },
+			},
 		},
-    };
-
-    json_read("settings.json", settings_map, 2);
+	};
+	
+	json_read("settings.json", settings_map, 2);
 }
 ```

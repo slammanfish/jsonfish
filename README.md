@@ -5,9 +5,11 @@
 * C99
 
 ## about
-**jsonfish** works by constructing a **map** that corresponds to a **c struct**, creating a simple yet effective json parser.<br>
+**jsonfish** works by constructing a ***map*** that corresponds to a ***c struct***.<br>
 the *downside* to this is that you have to know the format of the json file to parse it.<br>
-*this should not be a problem for most use cases*
+*this should not be a problem for most use cases*<br>
+#### IMPORTANT
+the map needs to be in the ***exact*** same order as the json file.
 
 ## examples
 ### parsing a settings file

@@ -1,5 +1,7 @@
 build/
 
+*.sh
+
 # Prerequisites
 *.d
 

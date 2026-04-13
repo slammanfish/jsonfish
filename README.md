@@ -5,7 +5,6 @@
 * C99
 
 ## about
-**jsonfish** works by constructing a **map** that corresponds to a **c struct**.
 ### API
 the **API** is incredibly simple.<br>
 using the ```json_t``` struct, you define a **map** that reflects a **c struct**

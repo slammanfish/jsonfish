@@ -6,92 +6,179 @@
 
 #include "jsonfish.h"
 
-static void parse_value(char **str, json_t json) {
-	char *key = NULL;
-	if (json.key) {
-		key = strstr(*str, json.key);
-	} else {
-		key = *str;
+static void _string(char **str, void *value) {
+	char val_str[JSON_MAX_STRING];
+	size_t len = 0;
+	(*str)++;
+	for (unsigned int i = 0; i < JSON_MAX_STRING - 1; i++) {
+		if (**str == '"') {
+			break;
+		}
+
+		val_str[len++] = **str;
+		(*str)++;
+	}
+	(*str)++;
+	val_str[len] = '\0';
+	memcpy(value, val_str, sizeof(char) * len);
+}
+
+static void _int(char **str, void *value) {
+	char val_str[JSON_MAX_STRING];
+	size_t len = 0;
+	for (unsigned int i = 0; i < JSON_MAX_STRING - 1; i++) {
+		bool exit = false;
+		switch (**str) {
+			case '-':
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				val_str[len++] = **str;
+				(*str)++;
+				break;
+			default:
+				exit = true;
+				break;
+		}
+
+		if (exit) {
+			break;
+		}
+	}
+	(*str)++;
+	val_str[len] = '\0';
+	int val = strtol(val_str, NULL, 10);
+	memcpy(value, &val, sizeof(int));
+}
+
+static void _float(char **str, void *value) {
+	char val_str[JSON_MAX_STRING];
+	size_t len = 0;
+	for (unsigned int i = 0; i < JSON_MAX_STRING - 1; i++) {
+		bool exit = false;
+		switch (**str) {
+			case '-':
+			case 'e':
+			case 'E':
+			case '.':
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				val_str[len++] = **str;
+				(*str)++;
+				break;
+			default:
+				exit = true;
+				break;
+		}
+
+		if (exit) {
+			break;
+		}
+	}
+	(*str)++;
+	val_str[len] = '\0';
+	float val = strtof(val_str, NULL);
+	memcpy(value, &val, sizeof(float));
+}
+
+static void _boolean(char **str, void *value) {
+	bool val = false;
+	if (**str == 't') {
+		val = true;
+		(*str) += 5;
+	} else if (**str == 'f') {
+		val = false;
+		(*str) += 6;
+	}
+	memcpy(value, &val, sizeof(bool));
+}
+
+static void _null(char **str, void *value) {
+	value = NULL;
+	(*str) += 5;
+}
+
+static void _array(json_t json, char **str) {
+	char vals[json.count][JSON_MAX_STRING];
+	int vali[json.count];
+	float valf[json.count];
+	bool valb[json.count];
+	(*str)++;
+	for (unsigned int i = 0; i < json.count; i++) {
+		if (json.array_type == JSON_VALUE_TYPE_STRING) {
+			_string(str, vals[i]);
+		} else if (json.array_type == JSON_VALUE_TYPE_INT) {
+			_int(str, &vali[i]);
+		} else if (json.array_type == JSON_VALUE_TYPE_FLOAT) {
+			_float(str, &valf[i]);
+		} else if (json.array_type == JSON_VALUE_TYPE_BOOLEAN) {
+			_boolean(str, &valb[i]);
+		}
+		if (**str == ',') {
+			(*str)++;
+		}
+	}
+	(*str)++;
+	if (json.array_type == JSON_VALUE_TYPE_STRING) {
+		memcpy(json.value, vals, sizeof(char) * JSON_MAX_STRING * json.count);
+	} else if (json.array_type == JSON_VALUE_TYPE_INT) {
+		memcpy(json.value, vali, sizeof(int) * json.count);
+	} else if (json.array_type == JSON_VALUE_TYPE_FLOAT) {
+		memcpy(json.value, valf, sizeof(float) * json.count);
+	} else if (json.array_type == JSON_VALUE_TYPE_BOOLEAN) {
+		memcpy(json.value, valb, sizeof(bool) * json.count);
+	}
+}
+
+static void parse_value(json_t json, char **str, int level) {
+	if (!json.key) {
+		for (unsigned int i = 0; i < json.count; i++) {
+			parse_value(((json_t*)json.value)[i], str, level + 1);
+		}
+		return;
 	}
 
-	char *start = strchr(key, ':') + 1;
-	char *end = strchr(start, ',');
-	size_t len = end - start + 1;
+	char *key = strstr(*str, json.key);
+	size_t key_len = strlen(json.key);
+
+	*str = key + key_len + 2; // +2 to get rid of quote and colon
 
 	if (json.type == JSON_VALUE_TYPE_OBJECT) {
 		for (unsigned int i = 0; i < json.count; i++) {
-			parse_value(str, ((json_t*)json.value)[i]);
+			parse_value(((json_t*)json.value)[i], str, level + 1);
 		}
 	} else if (json.type == JSON_VALUE_TYPE_ARRAY) {
-		start++;
-
-		char vals[json.count][JSON_MAX_STRING];
-		int vali[json.count];
-		float valf[json.count];
-		bool valb[json.count];
-
-		for (unsigned int i = 0; i < json.count; i++) {
-			if (json.array_type == JSON_VALUE_TYPE_STRING) {
-				strncpy(vals[i], start + 1, len - 3);
-			} else if (json.array_type == JSON_VALUE_TYPE_INT) {
-				char num[len + 1];
-				snprintf(num, len, "%s", start);
-				num[len] = '\0';
-				vali[i] = strtol(num, NULL, 10);
-			} else if (json.array_type == JSON_VALUE_TYPE_FLOAT) {
-				char num[len + 1];
-				snprintf(num, len, "%s", start);
-				num[len] = '\0';
-				valf[i] = strtof(num, NULL);
-			} else if (json.array_type == JSON_VALUE_TYPE_BOOLEAN) {
-				if (start[0] == 't') {
-					valb[i] = true;
-				} else if (start[0] == 'f') {
-					valb[i] = false;
-				}
-			} else if (json.array_type == JSON_VALUE_TYPE_NULL) {
-				json.value = NULL;
-			}
-
-			if (i < json.count - 1) {
-				start = end + 1;
-				end = strchr(start, ',');
-				len = end - start + 1;
-			}
-		}
-
-		if (json.array_type == JSON_VALUE_TYPE_STRING) {
-			memcpy(json.value, vals, sizeof(char) * JSON_MAX_STRING * json.count);
-		} else if (json.array_type == JSON_VALUE_TYPE_INT) {
-			memcpy(json.value, vali, sizeof(int) * json.count);
-		} else if (json.array_type == JSON_VALUE_TYPE_FLOAT) {
-			memcpy(json.value, valf, sizeof(float) * json.count);
-		} else if (json.array_type == JSON_VALUE_TYPE_BOOLEAN) {
-			memcpy(json.value, valb, sizeof(bool) * json.count);
-		} 
+		_array(json, str);
 	} else if (json.type == JSON_VALUE_TYPE_STRING) {
-		strncpy(json.value, start + 1, len - 3);
+		_string(str, json.value);
 	} else if (json.type == JSON_VALUE_TYPE_INT) {
-		char num[len + 1];
-		snprintf(num, len, "%s", start);
-		num[len] = '\0';
-		*(int*)json.value = strtol(num, NULL, 10);
+		_int(str, json.value);
 	} else if (json.type == JSON_VALUE_TYPE_FLOAT) {
-		char num[len + 1];
-		snprintf(num, len, "%s", start);
-		num[len] = '\0';
-		*(float*)json.value = strtof(num, NULL);
+		_float(str, json.value);
 	} else if (json.type == JSON_VALUE_TYPE_BOOLEAN) {
-		if (start[0] == 't') {
-			*(bool*)json.value = true;
-		} else if (start[0] == 'f') {
-			*(bool*)json.value = false;
-		}
+		_boolean(str, json.value);
 	} else if (json.type == JSON_VALUE_TYPE_NULL) {
-		json.value = NULL;
+		_null(str, json.value);
 	}
 
-	(*str) = end;
+	if (**str == ',') {
+		(*str)++;
+	}
 }
 
 void json_parse(char *str, json_t json) {
@@ -109,7 +196,8 @@ void json_parse(char *str, json_t json) {
 	json_str[size] = '\0';
 
 	char *temp = json_str;
-	parse_value(&temp, json);
+
+	parse_value(json, &temp, 0);
 
 	JSON_FREE(json_str);
 }

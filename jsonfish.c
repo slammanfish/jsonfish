@@ -292,7 +292,7 @@ static void save_value(const json_t json, char **str, size_t *len, int level, bo
 
 			if (json.array_type == JSON_VALUE_TYPE_STRING) {
 				ADD("\"");
-				ADD(((char**)json.value)[i]);
+				ADD((char*)json.value + i * JSON_MAX_STRING);
 				ADD("\"");
 			} else if (json.array_type == JSON_VALUE_TYPE_INT) {
 				char value[JSON_MAX_STRING];

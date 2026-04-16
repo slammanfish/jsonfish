@@ -83,5 +83,5 @@ int main(int argc, char **argv) {
 	printf("numf: %f\n", settings.numf);
 
 	// save json file
-	// json_write("test.json", settings_map, true);
+	json_write("test.json", settings_map, true);
 }

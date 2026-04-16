@@ -13,7 +13,7 @@ typedef struct json {
 	char *key; // the value key, NULL for the root object
 	json_value_type_e type; // the value type
 	struct {
-		void *value;// pointer to value in the c struct or array of json_t
+		void *value; // pointer to value in the c struct or array of json_t
 		size_t count; // number of child objects or array length
 		json_value_type_e array_type; // the array element type, ignored if type != JSON_VALUE_TYPE_ARRAY
 	};

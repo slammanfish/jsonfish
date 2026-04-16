@@ -20,7 +20,7 @@ static void _string(char **str, void *value) {
 	}
 	(*str)++;
 	val_str[len] = '\0';
-	memcpy(value, val_str, sizeof(char) * len);
+	memcpy(value, val_str, sizeof(char) * (len + 1));
 }
 
 static void _int(char **str, void *value) {

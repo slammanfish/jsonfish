@@ -51,10 +51,8 @@ to maintain simplicity, i made a few shortcuts
 these include:
 
 * the json map **MUST** be in the same order as the json string
-* strings cannot contain ***quotes*** ("), ***commas*** (,), ***colons*** (:)
-* strings cannot contain control characters, including spaces (use underscores what are you even doing?)
-* arrays cannot store objects
-* arrays cannot store arrays
+* strings cannot contain **quotes** (") or control characters, including spaces (use underscores what are you even doing?)
+* arrays cannot store **objects** or **arrays**
 
 this was made pretty much exclusively to load settings for my game so these features were not worth implementing (skill issue or lazy?)
 if you need a proper, full featured json parser, i recommend [parson](https://github.com/kgabis/parson)
